@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = 'carnaval_fever_secret'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 DB = 'asistentes.db'
 
 
@@ -225,5 +227,5 @@ def dashboard():
 
 init_db()
 
-if __name__ == '__main__':
-    app.run()
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
