@@ -339,6 +339,157 @@ def usuarios():
     con.close()
 
     return render_template('usuarios.html', usuarios=usuarios)
+@app.route('/crear_usuario', methods=['POST'])
+@login_requerido
+@solo_admin
+def crear_usuario():
+    d = request.form
+
+    con = conectar()
+    cur = con.cursor()
+
+    if es_postgres():
+        cur.execute("""
+            INSERT INTO usuarios
+            (nombre, usuario, password, celular, rol, cargo)
+            VALUES (%s,%s,%s,%s,%s,%s)
+        """, (
+            d['nombre'],
+            d['usuario'],
+            d['password'],
+            d['celular'],
+            d['rol'],
+            d['cargo']
+        ))
+    else:
+        cur.execute("""
+            INSERT INTO usuarios
+            (nombre, usuario, password, celular, rol, cargo)
+            VALUES (?,?,?,?,?,?)
+        """, (
+            d['nombre'],
+            d['usuario'],
+            d['password'],
+            d['celular'],
+            d['rol'],
+            d['cargo']
+        ))
+
+    con.commit()
+    cur.close()
+    con.close()
+
+    return redirect('/usuarios')
+@app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
+@login_requerido
+@solo_admin
+def editar_usuario(id):
+    con = conectar()
+    cur = con.cursor()
+
+    if request.method == 'POST':
+        d = request.form
+
+        if es_postgres():
+            cur.execute("""
+                UPDATE usuarios SET
+                nombre=%s, usuario=%s, password=%s,
+                celular=%s, rol=%s, cargo=%s
+                WHERE id=%s
+            """, (
+                d['nombre'],
+                d['usuario'],
+                d['password'],
+                d['celular'],
+                d['rol'],
+                d['cargo'],
+                id
+            ))
+        else:
+            cur.execute("""
+                UPDATE usuarios SET
+                nombre=?, usuario=?, password=?,
+                celular=?, rol=?, cargo=?
+                WHERE id=?
+            """, (
+                d['nombre'],
+                d['usuario'],
+                d['password'],
+                d['celular'],
+                d['rol'],
+                d['cargo'],
+                id
+            ))
+
+        con.commit()
+        cur.close()
+        con.close()
+        return redirect('/usuarios')
+
+    if es_postgres():
+        cur.execute("""
+            SELECT id, nombre, usuario, password, celular, rol, cargo
+            FROM usuarios WHERE id=%s
+        """, (id,))
+    else:
+        cur.execute("""
+            SELECT id, nombre, usuario, password, celular, rol, cargo
+            FROM usuarios WHERE id=?
+        """, (id,))
+
+    usuario = cur.fetchone()
+
+    cur.close()
+    con.close()
+
+    return render_template('editar_usuario.html', u=usuario)
+@app.route('/eliminar_usuario/<int:id>', methods=['POST'])
+@login_requerido
+@solo_admin
+def eliminar_usuario(id):
+
+    if session.get('id') == id:
+        return redirect('/usuarios')
+
+    con = conectar()
+    cur = con.cursor()
+
+    if es_postgres():
+        cur.execute("DELETE FROM usuarios WHERE id=%s", (id,))
+    else:
+        cur.execute("DELETE FROM usuarios WHERE id=?", (id,))
+
+    con.commit()
+    cur.close()
+    con.close()
+
+    return redirect('/usuarios')
+@app.route('/reset_password/<int:id>', methods=['POST'])
+@login_requerido
+@solo_admin
+def reset_password(id):
+    nueva = request.form['password']
+
+    con = conectar()
+    cur = con.cursor()
+
+    if es_postgres():
+        cur.execute(
+            "UPDATE usuarios SET password=%s WHERE id=%s",
+            (nueva, id)
+        )
+    else:
+        cur.execute(
+            "UPDATE usuarios SET password=? WHERE id=?",
+            (nueva, id)
+        )
+
+    con.commit()
+    cur.close()
+    con.close()
+
+    return redirect('/usuarios')
+
 
 
 @app.route('/staff')
