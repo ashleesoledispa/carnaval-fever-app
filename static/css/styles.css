@@ -241,3 +241,121 @@ td {
     gap: 10px;
     min-width: 180px;
 }
+/* ======== MODO CELULAR ======== */
+@media (max-width: 768px) {
+
+    body {
+        font-size: 18px;
+    }
+
+    button, .btn {
+        width: 100%;
+        padding: 18px;
+        font-size: 18px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+
+    .card {
+        padding: 20px;
+    }
+
+}
+.lista-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px;
+    border-bottom: 1px solid #222;
+}
+
+.lista-item span {
+    font-size: 18px;
+}
+
+.lista-item input[type="checkbox"] {
+    transform: scale(1.8);
+}
+body {
+    background: #0f0f0f;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    border-radius: 10px;
+}
+/* ===== LISTA DE ASISTENTES ===== */
+
+.fila-asistente {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px;
+    border-bottom: 1px solid #222;
+    min-height: 65px;
+}
+
+.nombre-asistente {
+    font-size: 18px;
+}
+
+.check-asistencia {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+}
+
+/* ===== MODO CELULAR ===== */
+@media (max-width: 768px) {
+
+    body {
+        font-size: 18px;
+    }
+
+    .card {
+        padding: 20px;
+    }
+
+    button, .btn-secondary, .btn-danger {
+        width: 100%;
+        padding: 18px;
+        font-size: 18px;
+        border-radius: 14px;
+        margin-bottom: 12px;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    #buscar {
+        width: 100%;
+        padding: 16px;
+        font-size: 18px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+    }
+
+    .fila-asistente {
+        padding: 20px;
+        min-height: 75px;
+    }
+
+    .nombre-asistente {
+        font-size: 20px;
+    }
+
+    .check-asistencia {
+        width: 32px;
+        height: 32px;
+    }
+}
+.fila-asistente.checked {
+    background: rgba(0, 200, 0, 0.15);
+}
+

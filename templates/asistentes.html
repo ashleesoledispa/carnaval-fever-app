@@ -67,16 +67,17 @@ function buscar() {
         contenedor.innerHTML = '';
 
         data.forEach(p => {
-            contenedor.innerHTML += `
-                <div class="fila-asistente">
-                    <span class="nombre-asistente">${p.nombre}</span>
-                    <input type="checkbox"
-                        class="check-asistencia"
-                        ${p.check ? 'checked' : ''}
-                        onclick="check(${p.id})">
-                </div>
-            `;
-        });
+    contenedor.innerHTML += `
+        <div class="fila-asistente ${p.check ? 'checked' : ''}">
+            <span class="nombre-asistente">${p.nombre}</span>
+            <input type="checkbox"
+                class="check-asistencia"
+                ${p.check ? 'checked' : ''}
+                onclick="check(${p.id})">
+        </div>
+    `;
+});
+
     });
 }
 
@@ -86,8 +87,9 @@ function check(id){
         credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({id})
-    });
+    }).then(() => buscar());
 }
+
 
 buscarInput.addEventListener('input', buscar);
 buscar();
