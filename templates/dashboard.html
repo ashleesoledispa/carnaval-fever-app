@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Hola {{ session.nombre }}</h2>
+
+<div class="stats">
+    <div class="stat">
+        <h2>{{ asistieron }}</h2>
+        <p>Asistieron</p>
+    </div>
+
+    <div class="stat">
+        <h2>{{ no_asistieron }}</h2>
+        <p>No asistieron</p>
+    </div>
+
+    <div class="stat">
+        <h2>{{ total }}</h2>
+        <p>Entradas vendidas</p>
+    </div>
+</div>
+
+<br>
+
+<div style="display:flex; gap:16px; flex-wrap:wrap;">
+    <button onclick="location.href='/asistentes'">Asistentes</button>
+
+    {% if session.rol == 'admin' %}
+        <button onclick="location.href='/usuarios'">Crear usuarios</button>
+    {% endif %}
+
+    <!-- 👇 visible para admin y staff -->
+    <button onclick="location.href='/staff'">Ver staff puerta</button>
+
+    <button class="btn-danger" onclick="location.href='/logout'">Salir</button>
+</div>
+
+{% endblock %}

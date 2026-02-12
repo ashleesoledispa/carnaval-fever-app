@@ -1,0 +1,243 @@
+:root {
+    --azul: #3b6cff;
+    --naranja: #ff9a3c;
+    --amarillo: #ffd400;
+    --negro: #0b0b0b;
+    --card: #121212;
+    --blanco: #ffffff;
+    --gris: #a8a8a8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--negro);
+    color: var(--blanco);
+}
+
+/* ---------- NAVBAR ---------- */
+.navbar {
+    background: linear-gradient(90deg, var(--azul), var(--naranja));
+    padding: 14px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.logo {
+    width: 220px;
+}
+
+/* ---------- LAYOUT ---------- */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 30px 20px;
+}
+
+/* ---------- CARDS ---------- */
+.card {
+    background: linear-gradient(
+        135deg,
+        rgba(59,108,255,0.18),
+        rgba(255,154,60,0.18)
+    );
+    border-radius: 22px;
+    padding: 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.5);
+}
+
+/* ---------- DASHBOARD ---------- */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap: 24px;
+}
+
+.stat {
+    background: rgba(0,0,0,0.55);
+    border-radius: 18px;
+    padding: 26px;
+    text-align: center;
+}
+
+.stat h2 {
+    font-size: 42px;
+    margin: 0;
+    color: var(--amarillo);
+}
+
+.stat p {
+    margin-top: 6px;
+    color: var(--gris);
+}
+
+/* ---------- FORM ---------- */
+.form-box {
+    max-width: 520px;
+    margin: auto;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    margin-bottom: 14px;
+}
+
+/* ---------- BUTTONS ---------- */
+button {
+    background: linear-gradient(135deg, var(--naranja), var(--amarillo));
+    color: #000;
+    padding: 14px 26px;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--azul), #7f9cff);
+    color: #fff;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff4b4b, #ff9a3c);
+}
+
+/* ---------- TABLE ---------- */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 18px;
+}
+
+th {
+    color: var(--gris);
+    text-align: left;
+    font-size: 14px;
+}
+
+td {
+    background: rgba(0,0,0,0.55);
+    padding: 18px;
+    border-radius: 14px;
+}
+
+/* ---------- ROLE BADGE ---------- */
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.admin {
+    background: linear-gradient(135deg, var(--amarillo), var(--naranja));
+    color: #000;
+}
+
+.staff {
+    background: linear-gradient(135deg, var(--azul), #7f9cff);
+}
+
+/* ---------- ACTIONS ---------- */
+.actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ---------- LOGIN ---------- */
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-box {
+    width: 420px;
+}
+
+
+/* ===== LISTA ASISTENTES (UNA SOLA CAJA) ===== */
+
+#lista-asistentes {
+    margin-top: 16px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 18px;
+    padding: 18px;
+}
+
+/* fila simple, no tarjetas */
+.fila-asistente {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.fila-asistente:last-child {
+    border-bottom: none;
+}
+
+/* nombre en UNA sola línea */
+.nombre-asistente {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 16px;
+}
+
+/* checkbox grande y centrado */
+.check-asistencia {
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+}
+
+/* ===== CARDS POR PERSONA (USUARIOS / STAFF) ===== */
+
+.persona-card {
+    background: rgba(0,0,0,0.55);
+    border-radius: 18px;
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.persona-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px 24px;
+    flex: 1;
+}
+
+.persona-info div {
+    font-size: 15px;
+}
+
+.persona-info span {
+    display: block;
+    color: var(--gris);
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.persona-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 180px;
+}

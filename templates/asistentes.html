@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button class="btn-secondary" onclick="location.href='/'">
+    Volver
+</button>
+
+{% if session.rol == 'admin' %}
+<div class="card">
+    <h2>Pegar lista de asistentes</h2>
+
+    <textarea id="lista" rows="6"
+        placeholder="Pega los nombres, uno por línea"></textarea>
+
+    <div style="display:flex; gap:14px; margin-top:14px;">
+        <button onclick="cargar()">Cargar lista</button>
+        <button class="btn-danger" onclick="eliminarLista()">Eliminar lista</button>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <input id="buscar" placeholder="Buscar por nombre o apellido">
+
+    <!-- LISTA GENERAL -->
+    <div id="lista-asistentes"></div>
+</div>
+
+<script>
+const lista = document.getElementById('lista');
+const buscarInput = document.getElementById('buscar');
+const contenedor = document.getElementById('lista-asistentes');
+
+function cargar() {
+    fetch('/cargar', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ texto: lista.value })
+    }).then(r => {
+        if (!r.ok) {
+            alert("Solo el admin puede cargar la lista");
+            return;
+        }
+        lista.value = '';
+        buscar();
+    });
+}
+
+function eliminarLista() {
+    if (!confirm('¿Eliminar toda la lista de asistentes?')) return;
+
+    fetch('/cargar', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ texto: '' })
+    }).then(() => buscar());
+}
+
+function buscar() {
+    fetch('/buscar?q=' + buscarInput.value, {
+        credentials: 'same-origin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        contenedor.innerHTML = '';
+
+        data.forEach(p => {
+            contenedor.innerHTML += `
+                <div class="fila-asistente">
+                    <span class="nombre-asistente">${p.nombre}</span>
+                    <input type="checkbox"
+                        class="check-asistencia"
+                        ${p.check ? 'checked' : ''}
+                        onclick="check(${p.id})">
+                </div>
+            `;
+        });
+    });
+}
+
+function check(id){
+    fetch('/check', {
+        method:'POST',
+        credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id})
+    });
+}
+
+buscarInput.addEventListener('input', buscar);
+buscar();
+</script>
+
+{% endblock %}

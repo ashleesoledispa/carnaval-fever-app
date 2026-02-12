@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button onclick="location.href='/usuarios'">⬅ Volver</button>
+
+<h2>Editar usuario</h2>
+
+<form method="post" class="card">
+    <input name="nombre" value="{{ u[1] }}" required>
+    <input name="usuario" value="{{ u[2] }}" required>
+    <input name="password" value="{{ u[3] }}" required>
+    <input name="celular" value="{{ u[4] }}">
+    <input name="cargo" value="{{ u[6] }}" required>
+
+    <select name="rol">
+        <option value="admin" {% if u[5]=='admin' %}selected{% endif %}>Admin</option>
+        <option value="staff" {% if u[5]=='staff' %}selected{% endif %}>Staff</option>
+    </select>
+
+    <br><br>
+    <button>Guardar cambios</button>
+</form>
+
+{% endblock %}

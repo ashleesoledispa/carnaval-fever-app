@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button class="btn-secondary" onclick="location.href='/'">
+    Volver al dashboard
+</button>
+
+<h2>Staff puerta</h2>
+
+{% for u in usuarios %}
+<div class="persona-card">
+
+    <div class="persona-info">
+        <div>
+            <span>Nombre</span>
+            {{ u[0] }}
+        </div>
+
+        <div>
+            <span>Usuario</span>
+            {{ u[1] }}
+        </div>
+
+        <div>
+            <span>Celular</span>
+            {{ u[2] }}
+        </div>
+
+        <div>
+            <span>Rol</span>
+            {{ u[3] }}
+        </div>
+
+        <div>
+            <span>Cargo</span>
+            {{ u[4] }}
+        </div>
+    </div>
+
+</div>
+{% endfor %}
+
+{% endblock %}
