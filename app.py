@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, jsonify, redirect, session
 import sqlite3
 import unicodedata
 from functools import wraps
+import os
+import psycopg2
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = 'carnaval_fever_secret'
@@ -10,7 +13,22 @@ DB = 'asistentes.db'
 # ================== UTILIDADES ==================
 
 def conectar():
+    DATABASE_URL = os.environ.get("DATABASE_URL")
+
+    # Si existe DATABASE_URL → estamos en Render (PostgreSQL)
+    if DATABASE_URL:
+        url = urlparse(DATABASE_URL)
+        return psycopg2.connect(
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port
+        )
+
+    # Si NO existe → estamos en local (SQLite)
     return sqlite3.connect(DB)
+
 
 def normalizar(texto):
     texto = texto.lower()
@@ -39,8 +57,9 @@ def solo_admin(f):
 # ================== BASE DE DATOS ==================
 
 def init_db():
-    with conectar() as con:
-        con.execute("""
+    con = conectar()
+cur = con.cursor()
+cur.execute("""
             CREATE TABLE IF NOT EXISTS asistentes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT,
@@ -49,7 +68,7 @@ def init_db():
             )
         """)
 
-        con.execute("""
+cur.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT,
@@ -61,12 +80,18 @@ def init_db():
             )
         """)
 
+con.commit()
+cur.close()
+con.close()
+
+
+
         # Usuario admin fijo
-        existe = con.execute(
+existe = con.execute(
             "SELECT id FROM usuarios WHERE usuario='ashleesoledispa'"
         ).fetchone()
 
-        if not existe:
+if not existe:
             con.execute("""
                 INSERT INTO usuarios
                 (nombre, usuario, password, celular, rol, cargo)
