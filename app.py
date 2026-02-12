@@ -10,25 +10,25 @@ app = Flask(__name__)
 app.secret_key = 'carnaval_fever_secret'
 DB = 'asistentes.db'
 
-# ================== UTILIDADES ==================
+
+# ================== CONEXIÓN ==================
 
 def conectar():
     DATABASE_URL = os.environ.get("DATABASE_URL")
 
-    # Si existe DATABASE_URL → estamos en Render (PostgreSQL)
+    # En Render (PostgreSQL)
     if DATABASE_URL:
-        url = urlparse(DATABASE_URL)
-        return psycopg2.connect(
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            host=url.hostname,
-            port=url.port
-        )
+        return psycopg2.connect(DATABASE_URL)
 
-    # Si NO existe → estamos en local (SQLite)
+    # En local (SQLite)
     return sqlite3.connect(DB)
 
+
+def es_postgres():
+    return os.environ.get("DATABASE_URL") is not None
+
+
+# ================== UTILIDADES ==================
 
 def normalizar(texto):
     texto = texto.lower()
@@ -36,6 +36,7 @@ def normalizar(texto):
         c for c in unicodedata.normalize('NFD', texto)
         if unicodedata.category(c) != 'Mn'
     )
+
 
 def login_requerido(f):
     @wraps(f)
@@ -45,7 +46,7 @@ def login_requerido(f):
         return f(*args, **kwargs)
     return decorador
 
-# 🔥 IMPORTANTE: NO REDIRECT AQUÍ (para fetch)
+
 def solo_admin(f):
     @wraps(f)
     def decorador(*args, **kwargs):
@@ -54,12 +55,36 @@ def solo_admin(f):
         return f(*args, **kwargs)
     return decorador
 
+
 # ================== BASE DE DATOS ==================
 
 def init_db():
     con = conectar()
-cur = con.cursor()
-cur.execute("""
+    cur = con.cursor()
+
+    if es_postgres():
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS asistentes (
+                id SERIAL PRIMARY KEY,
+                nombre TEXT,
+                normalizado TEXT,
+                asistio BOOLEAN DEFAULT FALSE
+            )
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id SERIAL PRIMARY KEY,
+                nombre TEXT,
+                usuario TEXT UNIQUE,
+                password TEXT,
+                celular TEXT,
+                rol TEXT,
+                cargo TEXT
+            )
+        """)
+    else:
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS asistentes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT,
@@ -68,7 +93,7 @@ cur.execute("""
             )
         """)
 
-cur.execute("""
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT,
@@ -80,19 +105,30 @@ cur.execute("""
             )
         """)
 
-con.commit()
-cur.close()
-con.close()
+    # Crear admin si no existe
+    if es_postgres():
+        cur.execute("SELECT id FROM usuarios WHERE usuario=%s", ('ashleesoledispa',))
+    else:
+        cur.execute("SELECT id FROM usuarios WHERE usuario=?", ('ashleesoledispa',))
 
+    existe = cur.fetchone()
 
-
-        # Usuario admin fijo
-existe = con.execute(
-            "SELECT id FROM usuarios WHERE usuario='ashleesoledispa'"
-        ).fetchone()
-
-if not existe:
-            con.execute("""
+    if not existe:
+        if es_postgres():
+            cur.execute("""
+                INSERT INTO usuarios
+                (nombre, usuario, password, celular, rol, cargo)
+                VALUES (%s,%s,%s,%s,%s,%s)
+            """, (
+                'Ashlee Soledispa',
+                'ashleesoledispa',
+                '1350830574',
+                '',
+                'admin',
+                'Administradora General'
+            ))
+        else:
+            cur.execute("""
                 INSERT INTO usuarios
                 (nombre, usuario, password, celular, rol, cargo)
                 VALUES (?,?,?,?,?,?)
@@ -105,6 +141,11 @@ if not existe:
                 'Administradora General'
             ))
 
+    con.commit()
+    cur.close()
+    con.close()
+
+
 # ================== LOGIN ==================
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -113,12 +154,25 @@ def login():
         u = request.form['usuario']
         p = request.form['password']
 
-        with conectar() as con:
-            user = con.execute("""
+        con = conectar()
+        cur = con.cursor()
+
+        if es_postgres():
+            cur.execute("""
+                SELECT id, nombre, rol
+                FROM usuarios
+                WHERE usuario=%s AND password=%s
+            """, (u, p))
+        else:
+            cur.execute("""
                 SELECT id, nombre, rol
                 FROM usuarios
                 WHERE usuario=? AND password=?
-            """, (u, p)).fetchone()
+            """, (u, p))
+
+        user = cur.fetchone()
+        cur.close()
+        con.close()
 
         if user:
             session['id'] = user[0]
@@ -131,21 +185,33 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
+
 
 # ================== DASHBOARD ==================
 
 @app.route('/')
 @login_requerido
 def dashboard():
-    with conectar() as con:
-        total = con.execute("SELECT COUNT(*) FROM asistentes").fetchone()[0]
-        asistieron = con.execute(
-            "SELECT COUNT(*) FROM asistentes WHERE asistio=1"
-        ).fetchone()[0]
+    con = conectar()
+    cur = con.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM asistentes")
+    total = cur.fetchone()[0]
+
+    if es_postgres():
+        cur.execute("SELECT COUNT(*) FROM asistentes WHERE asistio=TRUE")
+    else:
+        cur.execute("SELECT COUNT(*) FROM asistentes WHERE asistio=1")
+
+    asistieron = cur.fetchone()[0]
+
+    cur.close()
+    con.close()
 
     return render_template(
         'dashboard.html',
@@ -154,151 +220,6 @@ def dashboard():
         no_asistieron=total - asistieron
     )
 
-# ================== ASISTENTES ==================
-
-@app.route('/asistentes')
-@login_requerido
-def asistentes():
-    return render_template('asistentes.html')
-
-@app.route('/cargar', methods=['POST'])
-@login_requerido
-@solo_admin
-def cargar():
-    texto = request.json.get('texto', '')
-    lineas = texto.splitlines()
-
-    with conectar() as con:
-        con.execute("DELETE FROM asistentes")
-        for linea in lineas:
-            if linea.strip():
-                con.execute("""
-                    INSERT INTO asistentes (nombre, normalizado)
-                    VALUES (?,?)
-                """, (linea.strip(), normalizar(linea)))
-
-    return jsonify(ok=True)
-
-@app.route('/buscar')
-@login_requerido
-def buscar():
-    q = normalizar(request.args.get('q', ''))
-
-    with conectar() as con:
-        filas = con.execute("""
-            SELECT id, nombre, asistio
-            FROM asistentes
-            WHERE normalizado LIKE ?
-            ORDER BY nombre
-        """, (f"%{q}%",)).fetchall()
-
-    return jsonify([
-        {"id": f[0], "nombre": f[1], "check": bool(f[2])}
-        for f in filas
-    ])
-
-@app.route('/check', methods=['POST'])
-@login_requerido
-def check():
-    id = request.json['id']
-    with conectar() as con:
-        con.execute("""
-            UPDATE asistentes
-            SET asistio = NOT asistio
-            WHERE id = ?
-        """, (id,))
-    return jsonify(ok=True)
-
-# ================== USUARIOS ==================
-
-@app.route('/usuarios')
-@login_requerido
-@solo_admin
-def usuarios():
-    with conectar() as con:
-        usuarios = con.execute("""
-            SELECT id, nombre, usuario, celular, rol, cargo
-            FROM usuarios
-        """).fetchall()
-
-    return render_template('usuarios.html', usuarios=usuarios)
-
-@app.route('/crear_usuario', methods=['POST'])
-@login_requerido
-@solo_admin
-def crear_usuario():
-    d = request.form
-    with conectar() as con:
-        con.execute("""
-            INSERT INTO usuarios
-            (nombre, usuario, password, celular, rol, cargo)
-            VALUES (?,?,?,?,?,?)
-        """, (
-            d['nombre'], d['usuario'], d['password'],
-            d['celular'], d['rol'], d['cargo']
-        ))
-    return redirect('/usuarios')
-
-@app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
-@login_requerido
-@solo_admin
-def editar_usuario(id):
-    with conectar() as con:
-        if request.method == 'POST':
-            d = request.form
-            con.execute("""
-                UPDATE usuarios SET
-                nombre=?, usuario=?, password=?,
-                celular=?, rol=?, cargo=?
-                WHERE id=?
-            """, (
-                d['nombre'], d['usuario'], d['password'],
-                d['celular'], d['rol'], d['cargo'], id
-            ))
-            return redirect('/usuarios')
-
-        usuario = con.execute("""
-            SELECT id, nombre, usuario, password, celular, rol, cargo
-            FROM usuarios WHERE id=?
-        """, (id,)).fetchone()
-
-    return render_template('editar_usuario.html', u=usuario)
-
-@app.route('/eliminar_usuario/<int:id>', methods=['POST'])
-@login_requerido
-@solo_admin
-def eliminar_usuario(id):
-    if session.get('id') == id:
-        return redirect('/usuarios')
-
-    with conectar() as con:
-        con.execute("DELETE FROM usuarios WHERE id=?", (id,))
-    return redirect('/usuarios')
-
-@app.route('/reset_password/<int:id>', methods=['POST'])
-@login_requerido
-@solo_admin
-def reset_password(id):
-    nueva = request.form['password']
-    with conectar() as con:
-        con.execute(
-            "UPDATE usuarios SET password=? WHERE id=?",
-            (nueva, id)
-        )
-    return redirect('/usuarios')
-
-# ================== STAFF ==================
-
-@app.route('/staff')
-@login_requerido
-def staff():
-    with conectar() as con:
-        usuarios = con.execute("""
-            SELECT nombre, usuario, celular, rol, cargo
-            FROM usuarios
-        """).fetchall()
-
-    return render_template('staff.html', usuarios=usuarios)
 
 # ================== INIT ==================
 
@@ -306,4 +227,3 @@ init_db()
 
 if __name__ == '__main__':
     app.run()
-
