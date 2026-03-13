@@ -13,7 +13,7 @@
         placeholder="Pega los nombres, uno por línea"></textarea>
 
     <div style="display:flex; gap:14px; margin-top:14px;">
-        <button onclick="cargar()">Cargar lista</button>
+        <button onclick="cargar()">Agregar a lista</button>
         <button class="btn-danger" onclick="eliminarLista()">Eliminar lista</button>
     </div>
 </div>
@@ -31,6 +31,7 @@ const lista = document.getElementById('lista');
 const buscarInput = document.getElementById('buscar');
 const contenedor = document.getElementById('lista-asistentes');
 
+// 🔹 Agregar asistentes (sin borrar los anteriores)
 function cargar() {
     fetch('/cargar', {
         method: 'POST',
@@ -47,6 +48,7 @@ function cargar() {
     });
 }
 
+// 🔹 Eliminar toda la lista
 function eliminarLista() {
     if (!confirm('¿Eliminar toda la lista de asistentes?')) return;
 
@@ -58,6 +60,7 @@ function eliminarLista() {
     }).then(() => buscar());
 }
 
+// 🔹 Buscar y mostrar asistentes
 function buscar() {
     fetch('/buscar?q=' + buscarInput.value, {
         credentials: 'same-origin'
@@ -67,20 +70,20 @@ function buscar() {
         contenedor.innerHTML = '';
 
         data.forEach(p => {
-    contenedor.innerHTML += `
-        <div class="fila-asistente ${p.check ? 'checked' : ''}">
-            <span class="nombre-asistente">${p.nombre}</span>
-            <input type="checkbox"
-                class="check-asistencia"
-                ${p.check ? 'checked' : ''}
-                onclick="check(${p.id})">
-        </div>
-    `;
-});
-
+            contenedor.innerHTML += `
+                <div class="fila-asistente ${p.check ? 'checked' : ''}">
+                    <span class="nombre-asistente">${p.nombre}</span>
+                    <input type="checkbox"
+                        class="check-asistencia"
+                        ${p.check ? 'checked' : ''}
+                        onclick="check(${p.id})">
+                </div>
+            `;
+        });
     });
 }
 
+// 🔹 Marcar asistencia
 function check(id){
     fetch('/check', {
         method:'POST',
@@ -90,9 +93,12 @@ function check(id){
     }).then(() => buscar());
 }
 
-
+// 🔹 Evento de búsqueda en tiempo real
 buscarInput.addEventListener('input', buscar);
+
+// 🔹 Cargar lista al entrar
 buscar();
+
 </script>
 
 {% endblock %}
